@@ -1,0 +1,11 @@
+# Large, reproducible build inputs and artifacts
+/work/
+/out/*.zip
+
+# Local noise
+*.log
+Thumbs.db
+desktop.ini
+
+# Official Tailscale downloader; not part of this project
+/tailscale-setup-1.104.7.exe

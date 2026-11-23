@@ -1,0 +1,38 @@
+From: tailscale-win7 build
+Subject: [PATCH] wingoes: accept pre-Windows-10 versions
+
+Upstream wingoes panics on any version other than 10.0. Accept older
+versions and mark them for the VerifyVersionInfoW fallback used by the
+Windows 10 build-number queries.
+
+diff --git a/osversion.go b/osversion.go
+--- a/osversion.go
++++ b/osversion.go
+@@ -121,21 +121,18 @@ func (osv *osVersionInfo) init() {
+ 		return
+ 	}
+ 
+-	// We only support 10.0.x.x
+-	if osvx.MajorVersion != 10 || osvx.MinorVersion != 0 {
+-		if verCheckManifest(osvx) {
+-			panic("change in versioning scheme -- package must be updated to interpret")
+-		} else {
+-			panic("incoherent Windows version -- missing/outdated manifest?")
+-		}
+-	}
++	// Upstream only supports 10.0.x.x. For Windows 7/8/8.1 support we accept
++	// older versions and answer all Windows 10 build queries through
++	// VerifyVersionInfoW, which correctly reports false there.
++	preWin10 := osvx.MajorVersion != 10 || osvx.MinorVersion != 0
+ 
+ 	*osv = osVersionInfo{
+ 		build: osvx.BuildNumber,
+ 		str:   versionString(osvx),
+ 		isDC:  osvx.ProductType == _VER_NT_DOMAIN_CONTROLLER,
+ 		// Domain Controllers are also implicitly servers.
+-		isServer: osvx.ProductType == _VER_NT_DOMAIN_CONTROLLER || osvx.ProductType == _VER_NT_SERVER,
++		isServer:    osvx.ProductType == _VER_NT_DOMAIN_CONTROLLER || osvx.ProductType == _VER_NT_SERVER,
++		useFallback: preWin10,
+ 	}
+ }
+ 

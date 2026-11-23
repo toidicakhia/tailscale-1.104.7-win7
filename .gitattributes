@@ -1,0 +1,11 @@
+# Preserve every byte. The package contains signed driver files, a hash
+# manifest, and binaries whose bytes matter.
+* -text
+
+# Do not attempt textual diffs for binaries.
+*.exe -diff
+*.dll -diff
+*.sys -diff
+*.cat -diff
+*.msu -diff
+*.zip -diff

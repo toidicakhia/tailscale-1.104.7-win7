@@ -1,0 +1,22 @@
+From: tailscale-win7 build
+Subject: [PATCH] net/dns: skip the NRPT catch-all when the NRPT database is unavailable
+
+NRPT requires Windows 10. On Windows 7/8 the Windows DNS manager has no
+NRPT database, so creating a catch-all rule is not possible. Skip the
+catch-all and let the existing interface resolver configuration handle DNS.
+
+diff --git a/net/dns/manager_windows.go b/net/dns/manager_windows.go
+--- a/net/dns/manager_windows.go
++++ b/net/dns/manager_windows.go
+@@ -433,8 +433,10 @@ func (m *windowsManager) SetDNS(cfg OSConfig) error {
+ 	if len(cfg.MatchDomains) == 0 {
+ 		var resolvers []netip.Addr
+ 		var domains []dnsname.FQDN
+-		if !m.disableLocalDNSOverrideViaNRPT() {
++		if !m.disableLocalDNSOverrideViaNRPT() && m.nrptDB != nil {
+ 			// Create a default catch-all rule to make ourselves the actual primary resolver.
++			// NRPT requires Windows 10; on Windows 7/8/8.1 we skip it and
++			// configure the interface's primary resolver below instead.
+ 			// Without this rule, Windows 8.1 and newer devices issue parallel DNS requests to DNS servers
+ 			// associated with all network adapters, even when "Override local DNS" is enabled and/or
+ 			// a Mullvad exit node is being used, resulting in DNS leaks.
